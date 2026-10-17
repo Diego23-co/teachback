@@ -1,32 +1,42 @@
 import { Icon, type IconName } from "./Icon";
-import { newNodesFor, nodeLabels, statusLabel, statusesFor, type Status } from "../lib/data";
+import { statusLabel, type Status } from "../lib/data";
+import type { TopicDef } from "../lib/topics";
 
 const statusIcon: Record<Status, IconName | null> = { mint: "check", amber: "help", coral: "alert", grey: null };
 
 /** Kai's understanding map. Nodes sit on a percentage grid so it scales to any width. */
-export function ConceptMap({ step = 3, compact = false, onNode }: { step?: number; compact?: boolean; onNode?: (i: number) => void }) {
-  const status = statusesFor(step);
-  const fresh = newNodesFor(step);
+export function ConceptMap({ topic, statuses, fresh = [], disputed = [], compact = false, onNode }: {
+  topic: TopicDef;
+  statuses: Record<string, Status>;
+  fresh?: string[];
+  disputed?: string[];
+  compact?: boolean;
+  onNode?: (id: string) => void;
+}) {
+  const pos = Object.fromEntries(topic.nodes.map((n) => [n.id, n]));
   return (
-    <div className={`concept-map ${compact ? "compact" : ""}`} role="group" aria-label="Kai's understanding map">
+    <div className={`concept-map ${compact ? "compact" : ""} nodes-${topic.nodes.length}`} role="group" aria-label="Kai's understanding map">
       <svg className="map-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M50 12 L20 40 M50 12 L80 40 M20 40 L20 70 M80 40 L80 70 M20 70 L80 70 M50 12 L50 90" vectorEffect="non-scaling-stroke" />
+        <path d={topic.edges.map(([a, b]) => `M${pos[a].x} ${pos[a].y} L${pos[b].x} ${pos[b].y}`).join(" ")} vectorEffect="non-scaling-stroke" />
       </svg>
-      {nodeLabels.map((label, i) => {
-        const s = status[i];
+      {topic.nodes.map((n) => {
+        const s = statuses[n.id] ?? "grey";
         const icon = statusIcon[s];
+        const isNew = fresh.includes(n.id);
         return (
           <button
-            key={label}
+            key={n.id}
             type="button"
             tabIndex={compact ? -1 : undefined}
-            onClick={() => onNode?.(i)}
-            className={`map-node node-${i} ${s} ${fresh.includes(i) ? "is-new" : ""}`}
-            aria-label={`${label}: ${statusLabel[s]}${onNode ? ". Show details" : ""}`}
+            onClick={() => onNode?.(n.id)}
+            style={{ left: `${n.x}%`, top: `${n.y}%` }}
+            className={`map-node ${s} ${isNew ? "is-new" : ""}`}
+            aria-label={`${n.label}: ${statusLabel[s]}${disputed.includes(n.id) ? ", disputed by you" : ""}${onNode ? ". Show details" : ""}`}
           >
             <span className="status-icon">{icon ? <Icon name={icon} size={13} /> : <span className="dot-empty" />}</span>
-            <span>{label}</span>
-            {fresh.includes(i) && <i>NEW</i>}
+            <span>{n.label}</span>
+            {isNew && <i>NEW</i>}
+            {!isNew && disputed.includes(n.id) && <i className="disputed">DISPUTED</i>}
           </button>
         );
       })}

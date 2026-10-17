@@ -2,18 +2,24 @@ import { useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { BackLink, PageHeader, Shell } from "../components/Shell";
 import { Button, TopicCard } from "../components/ui";
-import { nodeLabels, topics, type TopicFilter } from "../lib/data";
+import { relativeTime, statusLabel, topicView, type TopicFilter } from "../lib/data";
+import { summarise } from "../lib/engine";
 import { go } from "../lib/router";
+import { useStore } from "../lib/store";
+import { comingSoon, getTopic, topicDefs } from "../lib/topics";
 
-const filters: TopicFilter[] = ["All", "In progress", "Not started", "Revisit"];
+const filters: TopicFilter[] = ["All", "In progress", "Not started", "Revisit", "Explained"];
 
 export function Topics() {
+  const { sessions } = useStore();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TopicFilter>("All");
-  const shown = useMemo(() => topics.filter((t) =>
-    (filter === "All" || t.state === filter) &&
-    `${t.title} ${t.desc}`.toLowerCase().includes(query.trim().toLowerCase()),
-  ), [query, filter]);
+  const views = useMemo(() => topicDefs.map((t) => topicView(t, sessions)), [sessions]);
+  const q = query.trim().toLowerCase();
+  const matches = (title: string, desc: string) => `${title} ${desc}`.toLowerCase().includes(q);
+  const shown = views.filter((v) => (filter === "All" || v.state === filter) && matches(v.topic.title, v.topic.desc));
+  const soon = filter === "All" ? comingSoon.filter((c) => matches(c.title, c.desc)) : [];
+  const count = (f: TopicFilter) => (f === "All" ? views.length + comingSoon.length : views.filter((v) => v.state === f).length);
 
   return (
     <Shell page="topics">
@@ -27,20 +33,24 @@ export function Topics() {
         <div className="chips" role="radiogroup" aria-label="Filter topics">
           {filters.map((f) => (
             <button key={f} type="button" role="radio" aria-checked={filter === f} className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>
-              {f} <span className="chip-count">{f === "All" ? topics.length : topics.filter((t) => t.state === f).length}</span>
+              {f} <span className="chip-count">{count(f)}</span>
             </button>
           ))}
         </div>
       </div>
-      <p className="sr-only" aria-live="polite">{shown.length} topics shown</p>
-      {shown.length ? (
+      <p className="sr-only" aria-live="polite">{shown.length + soon.length} topics shown</p>
+      {shown.length + soon.length ? (
         <div className="topic-grid">
-          {shown.map((t) => <TopicCard key={t.id} topic={t} status={t.state === "Coming soon" ? `${t.ideas} ideas` : `${t.ideas} ideas · ${t.state}`} onClick={() => go("topic")} />)}
+          {shown.map((v) => (
+            <TopicCard key={v.topic.id} title={v.topic.title} desc={v.topic.desc} icon={v.topic.icon} pill={v.state} progress={v.latest ? v.progress : []}
+              status={v.latest ? `${v.clear} of ${v.topic.nodes.length} ideas clear` : `${v.topic.nodes.length} ideas`} onClick={() => go("topic", v.topic.id)} />
+          ))}
+          {soon.map((c) => <TopicCard key={c.id} title={c.title} desc={c.desc} icon={c.icon} pill="Coming soon" status={`${c.ideas} ideas`} locked />)}
         </div>
       ) : (
         <div className="empty">
           <Icon name="search" size={28} />
-          <h2>No topics match “{query}”</h2>
+          <h2>{q ? `No topics match “${query}”` : `No topics are “${filter}” yet`}</h2>
           <p>Try a different word, or clear the filters.</p>
           <Button variant="secondary" onClick={() => { setQuery(""); setFilter("All"); }}>Clear search</Button>
         </div>
@@ -49,38 +59,69 @@ export function Topics() {
   );
 }
 
-export function TopicDetail() {
+export function TopicDetail({ id }: { id?: string }) {
+  const { sessions } = useStore();
+  const topic = getTopic(id);
+  if (!topic) {
+    return (
+      <Shell page="topics">
+        <div className="empty"><Icon name="book" size={28} /><h2>Topic not found</h2><Button onClick={() => go("topics")}>All topics</Button></div>
+      </Shell>
+    );
+  }
+  const v = topicView(topic, sessions);
+  const lastDone = sessions.filter((s) => s.topicId === topic.id && s.status === "completed").sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0))[0];
+  const summary = lastDone ? summarise(topic, lastDone) : null;
+  const taughtBefore = (nodeId: string) => sessions.some((s) => s.topicId === topic.id && s.nodes[nodeId]?.status === "mint");
+
   return (
     <Shell page="topics">
       <BackLink to="topics">All topics</BackLink>
       <section className="topic-detail-head">
-        <span className="topic-icon large"><Icon name="repeat" size={34} /></span>
+        <span className="topic-icon large"><Icon name={topic.icon} size={34} /></span>
         <div>
-          <p className="eyebrow">6 IDEAS TO EXPLORE</p>
-          <h1 tabIndex={-1}>Recursion</h1>
-          <p>Teach Kai how a function can solve a problem by calling itself.</p>
+          <p className="eyebrow">{topic.nodes.length} IDEAS TO EXPLORE</p>
+          <h1 tabIndex={-1}>{topic.title}</h1>
+          <p>{topic.detail}</p>
         </div>
-        <Button iconRight="arrowRight" onClick={() => go("confidence")}>Teach this topic</Button>
+        <div className="detail-actions">
+          {v.active && <Button icon="play" onClick={() => go("session", v.active!.id)}>Resume paused session</Button>}
+          <Button variant={v.active ? "secondary" : "primary"} iconRight="arrowRight" onClick={() => go("confidence", topic.id)}>{v.active ? "Start a new session" : "Teach this topic"}</Button>
+        </div>
       </section>
       <div className="detail-grid">
         <section className="card">
           <h2>What Kai will try to understand</h2>
           <ol className="idea-list">
-            {nodeLabels.map((x, i) => (
-              <li className="idea-row" key={x}>
-                <span className={i < 4 ? "done" : ""}>{i < 4 ? <Icon name="check" size={13} /> : i + 1}</span>
-                {x}
-                <small className={i < 4 ? "tag tag-mint" : "tag"}>{i < 4 ? "Explained before" : "Not covered yet"}</small>
-              </li>
-            ))}
+            {topic.nodes.map((n, i) => {
+              const before = taughtBefore(n.id);
+              return (
+                <li className="idea-row" key={n.id}>
+                  <span className={before ? "done" : ""}>{before ? <Icon name="check" size={13} /> : i + 1}</span>
+                  {n.label}
+                  <small className={before ? "tag tag-mint" : "tag"}>{before ? "Explained before" : "Not covered yet"}</small>
+                </li>
+              );
+            })}
           </ol>
         </section>
         <section className="card">
           <p className="eyebrow">YOUR LAST SESSION</p>
-          <h2>You found a useful gap</h2>
-          <p>Kai thought the base case value was the final answer. Try showing what happens as the calls return.</p>
-          <div className="soft-note"><Icon name="sparkle" />Finding a gap isn’t failure — it’s the useful part.</div>
-          <button type="button" className="text-link spaced" onClick={() => go("summary")}>Read last reflection <Icon name="arrowRight" size={16} /></button>
+          {summary && lastDone ? (
+            <>
+              <h2>{summary.revisit.length ? `${summary.revisit.length} idea${summary.revisit.length === 1 ? "" : "s"} to revisit` : "Every idea landed"}</h2>
+              <p>{relativeTime(lastDone.completedAt ?? lastDone.updatedAt)} · Kai understood {summary.understood} of {summary.total} ideas{summary.repaired.length ? ` and you repaired ${summary.repaired.length} misconception${summary.repaired.length === 1 ? "" : "s"}` : ""}.</p>
+              {summary.revisit.slice(0, 3).map((n) => <p key={n.id} className="revisit-line"><strong>{n.label}</strong> · {statusLabel[lastDone.nodes[n.id]?.status ?? "grey"]}</p>)}
+              <div className="soft-note"><Icon name="sparkle" />Finding a gap isn’t failure. It’s the useful part.</div>
+              <button type="button" className="text-link spaced" onClick={() => go("summary", lastDone.id)}>Read last reflection <Icon name="arrowRight" size={16} /></button>
+            </>
+          ) : (
+            <>
+              <h2>Nothing yet</h2>
+              <p>You haven’t finished a session on {topic.title} yet. When you do, your reflection will show up here.</p>
+              <div className="soft-note"><Icon name="sparkle" />Finding a gap isn’t failure. It’s the useful part.</div>
+            </>
+          )}
         </section>
       </div>
     </Shell>

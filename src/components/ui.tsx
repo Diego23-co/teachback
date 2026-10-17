@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 import { useStore } from "../lib/store";
-import type { Status, Topic } from "../lib/data";
+import type { Status } from "../lib/data";
 
 type ButtonProps = {
   children: ReactNode;
@@ -73,19 +73,18 @@ export function MiniBar({ colors }: { colors: Status[] }) {
   );
 }
 
-export function TopicCard({ topic, status, onClick }: { topic: Topic; status?: string; onClick?: () => void }) {
-  const locked = topic.state === "Coming soon";
+export function TopicCard({ title, desc, icon, pill, progress = [], status, locked = false, onClick }: { title: string; desc: string; icon: IconName; pill: string; progress?: Status[]; status: string; locked?: boolean; onClick?: () => void }) {
   return (
-    <button type="button" className={`topic-card ${locked ? "locked" : ""}`} onClick={onClick} disabled={locked} aria-label={`${topic.title}. ${topic.desc}. ${status ?? topic.state}`}>
+    <button type="button" className={`topic-card ${locked ? "locked" : ""}`} onClick={onClick} disabled={locked} aria-label={`${title}. ${desc}. ${status}`}>
       <span className="topic-card-top">
-        <span className="topic-icon"><Icon name={topic.icon} size={22} /></span>
-        {locked ? <span className="pill">Coming soon</span> : <span className={`pill pill-${topic.state.replace(" ", "-").toLowerCase()}`}>{topic.state}</span>}
+        <span className="topic-icon"><Icon name={icon} size={22} /></span>
+        <span className={`pill pill-${pill.replace(" ", "-").toLowerCase()}`}>{pill}</span>
       </span>
-      <h3>{topic.title}</h3>
-      <p>{topic.desc}</p>
-      {topic.progress.length > 0 && <MiniBar colors={topic.progress} />}
+      <h3>{title}</h3>
+      <p>{desc}</p>
+      {progress.length > 0 && <MiniBar colors={progress} />}
       <span className="topic-foot">
-        <span className="topic-status">{status ?? `${topic.ideas} ideas`}</span>
+        <span className="topic-status">{status}</span>
         {!locked && <span className="circle-arrow"><Icon name="arrowRight" size={16} /></span>}
       </span>
     </button>
