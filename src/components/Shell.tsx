@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 import { Kai } from "./Kai";
 import { Button } from "./ui";
-import { go, type Page } from "../lib/router";
+import { go, redirect, type Page } from "../lib/router";
 import { initials, useStore } from "../lib/store";
 
 const navItems: { page: Page; icon: IconName; label: string; short: string; mobile: boolean }[] = [
@@ -36,7 +36,7 @@ export function Shell({ page, children }: { page: Page; children: ReactNode }) {
           <Button icon="plus" onClick={() => go("topics")} className="teach-btn"><span className="nav-label">Teach Kai</span></Button>
           <button type="button" className="profile-mini" onClick={() => go("profile")} aria-label="Edit profile">
             <span className="user-avatar">{initials(profile.name)}</span>
-            <span className="profile-text"><strong>{profile.name}</strong><small>{profile.course.split(" ")[0]}</small></span>
+            <span className="profile-text"><strong>{profile.name}</strong><small>{profile.course.split(" – ")[0]}</small></span>
           </button>
         </div>
       </aside>
@@ -58,6 +58,12 @@ export function PageHeader({ eyebrow, title, sub, aside }: { eyebrow: string; ti
   );
 }
 
-export function BackLink({ to, children }: { to: Page; children: ReactNode }) {
-  return <button type="button" className="back-link" onClick={() => go(to)}><Icon name="arrow" size={18} /> {children}</button>;
+export function BackLink({ to, id, children }: { to: Page; id?: string; children: ReactNode }) {
+  return <button type="button" className="back-link" onClick={() => go(to, id)}><Icon name="arrow" size={18} /> {children}</button>;
+}
+
+/** Redirect after render (never during it). */
+export function Redirect({ to, id }: { to: Page; id?: string }) {
+  useEffect(() => redirect(to, id), [to, id]);
+  return null;
 }

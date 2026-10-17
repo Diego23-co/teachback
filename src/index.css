@@ -608,3 +608,74 @@ blockquote { margin: 1rem 0; padding: 1rem; border-left: 4px solid var(--peach);
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 :root[data-reduce-motion] *, :root[data-reduce-motion] *::before, :root[data-reduce-motion] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+
+/* ───────────────────────── Functional MVP additions ───────────────────────── */
+.chat-thread { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+.chat-thread > :last-child .message, .chat-thread > .message:last-child { animation: msg-in .35s var(--ease); }
+.chat-code { margin: .5rem 0; padding: .7rem .85rem; border-radius: 10px; background: rgb(0 0 0 / .18); font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .8rem; white-space: pre; overflow-x: auto; }
+.kai-bubble .chat-code { background: var(--grey-light); }
+.pulse-mic.idle { animation: none; }
+.listening > button:disabled { opacity: .5; cursor: not-allowed; }
+
+.concept-map.nodes-7 { height: 24rem; }
+.concept-map.compact.nodes-7 { height: 15rem; }
+.map-node i.disputed { background: var(--amber); }
+.drawer-hint { display: flex; gap: .5rem; align-items: flex-start; background: var(--primary-light); color: var(--primary-dark); padding: .85rem 1rem; border-radius: 12px; font-weight: 600; line-height: 1.5; }
+.drawer-hint svg { flex: 0 0 auto; margin-top: .15rem; }
+.challenge-form { margin-top: 1.5rem; display: grid; gap: .5rem; }
+.challenge-form label { font-weight: 700; font-size: .85rem; margin-top: .5rem; }
+.challenge-form textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 11px; padding: .75rem; background: var(--surface); color: var(--ink); resize: vertical; }
+.challenge-form textarea:focus { outline: none; border-color: var(--primary); }
+.challenge-choices { display: grid; gap: .5rem; }
+.challenge-choices button { min-height: 48px; text-align: left; padding: .7rem 1rem; border: 1.5px solid var(--border); border-radius: 11px; background: var(--surface); color: var(--ink); font-weight: 600; }
+.challenge-choices button.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+.challenge-form .drawer-actions { margin-top: 1rem; }
+
+.pin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.pin-grid label { display: block; font-weight: 700; font-size: .85rem; margin: 1rem 0 .5rem; }
+.pin-form { display: grid; gap: .35rem; text-align: left; width: min(360px, 100%); margin: 1rem auto 0; }
+.pin-form label:not(.check-row) { font-weight: 700; font-size: .85rem; margin-top: .5rem; }
+.pin-form input:not([type=checkbox]), .pin-grid input { width: 100%; min-height: 48px; padding: .75rem 1rem; border: 1.5px solid var(--border); border-radius: 11px; background: var(--surface); color: var(--ink); font-size: 1.15rem; letter-spacing: .3em; }
+.pin-form input:focus, .pin-grid input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent); }
+.pin-form input[aria-invalid=true] { border-color: var(--danger); }
+.pin-form .btn { width: 100%; justify-content: center; }
+.pin-form .button-row .btn { width: auto; }
+.signin-card .kai { margin: 0 auto 1rem; }
+.account-list { list-style: none; padding: 0; margin: 1.25rem auto 0; display: grid; gap: .6rem; width: min(400px, 100%); }
+.account-pick { width: 100%; display: flex; align-items: center; gap: .85rem; padding: .8rem 1rem; border: 1.5px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--ink); text-align: left; transition: border-color .18s, transform .18s; }
+.account-pick:hover { border-color: var(--primary); transform: translateY(-1px); }
+.account-pick > span:nth-child(2) { flex: 1; display: grid; }
+.account-pick small { color: var(--slate); }
+.signin-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+.text-link.muted { color: var(--slate); }
+.text-link.inline { display: inline; padding: 0; }
+.signin-alt { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.info-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; margin: 0 auto 1rem; }
+
+.pill-explained { background: var(--mint-light); color: var(--mint-ink); }
+.history-row h3 { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.history-actions { display: flex; align-items: center; gap: .4rem; }
+.detail-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.revisit.good { background: var(--mint-light); }
+.revisit.good > span { background: var(--mint); }
+.revisit-line { margin: .35rem 0; font-size: .9rem; }
+.bar-line b.kai-bar { background: var(--peach); }
+.setting-intro { color: var(--slate); margin: .25rem 0 1rem; line-height: 1.55; }
+.gap-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: .75rem; }
+.gap-list li { display: flex; gap: .65rem; align-items: flex-start; }
+.gap-list li > svg { color: var(--teal); flex: 0 0 auto; margin-top: .2rem; }
+.gap-list span { display: grid; gap: .15rem; } .gap-list small { color: var(--slate); line-height: 1.45; }
+
+.replay-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 1.5rem; align-items: start; }
+.replay-chat { display: flex; flex-direction: column; gap: 1rem; max-height: 70vh; overflow: auto; }
+.replay-kai { border: 0; background: none; padding: .25rem; text-align: left; border-radius: 16px; color: inherit; }
+.replay-kai.current { outline: 2px solid var(--peach); outline-offset: 2px; }
+.replay-map { position: sticky; top: 1.5rem; }
+.replay-map input[type=range] { width: 100%; accent-color: var(--primary); margin-bottom: 1rem; }
+
+@media (max-width: 760px) {
+  .pin-grid { grid-template-columns: 1fr; gap: 0; }
+  .replay-grid { grid-template-columns: 1fr; }
+  .replay-map { position: static; }
+  .concept-map.nodes-7 { height: 22rem; }
+}
